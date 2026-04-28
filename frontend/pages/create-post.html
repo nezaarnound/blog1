@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Post - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <section class="create-post-section">
+        <div class="container">
+            <div class="create-post-card">
+                <div class="card-header">
+                    <i class="fas fa-pen-fancy"></i>
+                    <h2>Create New Post</h2>
+                    <p>Share your thoughts with the world</p>
+                </div>
+                <form id="createPostForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-heading"></i> Post Title</label>
+                        <input type="text" id="title" placeholder="Enter your post title..." required>
+                        <small>At least 3 characters</small>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-paragraph"></i> Content</label>
+                        <textarea id="content" rows="12" placeholder="Write your post content here... (minimum 10 characters)" required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Publish Post
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="window.location.href='dashboard.html'">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/posts.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script>
+        // Check if user is logged in
+        if (!getToken()) {
+            window.location.href = 'login.html';
+        }
+        
+        loadNavbar();
+        
+        // Add event listener to form
+        const form = document.getElementById('createPostForm');
+        if (form) {
+            form.addEventListener('submit', handleCreatePost);
+        }
+    </script>
+</body>
+</html>

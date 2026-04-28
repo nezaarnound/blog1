@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post Detail - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <section class="post-detail-section">
+        <div class="container">
+            <div id="postDetail" class="post-detail-card">
+                <div class="loading">
+                    <i class="fas fa-spinner fa-spin"></i> Loading post...
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/posts.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script>
+        // Load navbar
+        loadNavbar();
+        
+        // Get post ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        
+        if (postId) {
+            loadPostDetail(postId);
+        } else {
+            document.getElementById('postDetail').innerHTML = `
+                <div class="error-container">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Post not found</h2>
+                    <p>No post ID provided.</p>
+                    <a href="../index.html" class="btn btn-primary">Back to Home</a>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <section class="create-post-section">
+        <div class="container">
+            <div class="create-post-card">
+                <div class="card-header">
+                    <i class="fas fa-edit"></i>
+                    <h2>Edit Post</h2>
+                    <p>Update your post</p>
+                </div>
+                <form id="editPostForm">
+                    <div class="form-group">
+                        <label><i class="fas fa-heading"></i> Post Title</label>
+                        <input type="text" id="title" placeholder="Enter your post title..." required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fas fa-paragraph"></i> Content</label>
+                        <textarea id="content" rows="12" placeholder="Write your post content here..." required></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Post
+                        </button>
+                        <button type="button" class="btn btn-outline" onclick="window.location.href='dashboard.html'">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </form>
+                <div id="message" class="message"></div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/posts.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script>
+        // Check if user is logged in
+        if (!getToken()) {
+            window.location.href = 'login.html';
+        }
+        
+        loadNavbar();
+        
+        // Get post ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        
+        if (!postId) {
+            showMessage('No post ID provided', 'error');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        } else {
+            loadPostForEdit(postId);
+        }
+        
+        // Add event listener to form
+        const form = document.getElementById('editPostForm');
+        if (form) {
+            form.addEventListener('submit', (e) => handleEditPost(e, postId));
+        }
+    </script>
+</body>
+</html>

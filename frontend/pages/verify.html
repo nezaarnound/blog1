@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <section class="auth-section">
+        <div class="container">
+            <div class="auth-card">
+                <div class="auth-header" id="verifyStatus">
+                    <i class="fas fa-spinner fa-spin" id="spinnerIcon"></i>
+                    <i class="fas fa-check-circle" id="successIcon" style="display: none;"></i>
+                    <i class="fas fa-times-circle" id="errorIcon" style="display: none;"></i>
+                    <h2 id="statusTitle">Verifying your email...</h2>
+                    <p id="statusMessage">Please wait while we verify your account</p>
+                </div>
+                <div id="verifyContent" style="text-align: center;">
+                    <button id="loginBtn" class="btn btn-primary btn-block" style="display: none;" onclick="window.location.href='login.html'">
+                        Go to Login
+                    </button>
+                    <button id="retryBtn" class="btn btn-outline btn-block" style="display: none;" onclick="retryVerification()">
+                        Retry Verification
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="../js/config.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script src="../js/auth.js"></script>
+    <script>
+        loadNavbar();
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        console.log('Token from URL:', token);
+        console.log('API_URL:', API_URL);
+        
+        async function verifyEmail() {
+            if (!token) {
+                showResult(false, 'Invalid Link', 'No verification token found. Please check your email link.');
+                return;
+            }
+            
+            try {
+                const url = `${API_URL}/auth/verify/${token}`;
+                console.log('Calling API:', url);
+                
+                const response = await fetch(url);
+                console.log('Response status:', response.status);
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    showResult(true, 'Email Verified Successfully!', 'Your account has been activated. You can now log in.');
+                } else {
+                    showResult(false, 'Verification Failed', data.message || 'The link may have expired. Please request a new verification email.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showResult(false, 'Verification Error', 'Unable to connect to server. Please make sure backend is running on port 3005.');
+            }
+        }
+        
+        function showResult(success, title, message) {
+            document.getElementById('spinnerIcon').style.display = 'none';
+            
+            if (success) {
+                document.getElementById('successIcon').style.display = 'inline-block';
+                document.getElementById('loginBtn').style.display = 'block';
+            } else {
+                document.getElementById('errorIcon').style.display = 'inline-block';
+                document.getElementById('retryBtn').style.display = 'block';
+            }
+            
+            document.getElementById('statusTitle').textContent = title;
+            document.getElementById('statusMessage').textContent = message;
+        }
+        
+        function retryVerification() {
+            document.getElementById('spinnerIcon').style.display = 'inline-block';
+            document.getElementById('errorIcon').style.display = 'none';
+            document.getElementById('retryBtn').style.display = 'none';
+            document.getElementById('statusTitle').textContent = 'Verifying your email...';
+            document.getElementById('statusMessage').textContent = 'Please wait while we verify your account';
+            verifyEmail();
+        }
+        
+        // Start verification
+        verifyEmail();
+    </script>
+</body>
+</html>

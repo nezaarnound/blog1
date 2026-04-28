@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .chat-section { margin-top: 80px; padding: 20px; min-height: calc(100vh - 80px); }
+        .chat-container { display: flex; gap: 20px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.1); height: 70vh; }
+        .chat-sidebar { width: 320px; background: #f8f9fa; border-right: 1px solid #e9ecef; display: flex; flex-direction: column; }
+        .chat-sidebar-header { padding: 20px; border-bottom: 1px solid #e9ecef; background: white; }
+        .chat-sidebar-header h3 { margin: 0; color: #1a1a2e; }
+        .conversations-list { flex: 1; overflow-y: auto; padding: 10px; }
+        .user-item, .conversation-item { display: flex; align-items: center; gap: 12px; padding: 12px; margin-bottom: 8px; background: white; border-radius: 12px; cursor: pointer; transition: all 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .user-item:hover, .conversation-item:hover { background: #e3f2fd; transform: translateX(5px); }
+        .user-avatar i, .conv-avatar i { font-size: 2rem; color: #4a90e2; }
+        .user-details, .conv-details { flex: 1; }
+        .user-name, .conv-name { font-weight: 600; color: #1a1a2e; }
+        .user-email { font-size: 0.7rem; color: #6c757d; }
+        .conv-last { font-size: 0.75rem; color: #6c757d; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+        .chat-btn { background: #4a90e2; color: white; border: none; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8rem; }
+        .unread-badge { background: #e74c3c; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; background: #f8f9fa; }
+        .chat-header { padding: 20px; background: white; border-bottom: 1px solid #e9ecef; }
+        .chat-header h3 { margin: 0; color: #1a1a2e; }
+        .chat-header small { color: #6c757d; font-size: 0.8rem; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; }
+        .message { margin-bottom: 15px; max-width: 70%; }
+        .message.sent { align-self: flex-end; }
+        .message.received { align-self: flex-start; }
+        .message-bubble { padding: 10px 15px; border-radius: 18px; word-wrap: break-word; }
+        .message.sent .message-bubble { background: #4a90e2; color: white; border-bottom-right-radius: 4px; }
+        .message.received .message-bubble { background: white; color: #1a1a2e; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .message-time { font-size: 0.7rem; color: #6c757d; margin-top: 4px; }
+        .chat-input { padding: 20px; background: white; border-top: 1px solid #e9ecef; display: flex; gap: 10px; }
+        .chat-input input { flex: 1; padding: 12px; border: 2px solid #e9ecef; border-radius: 25px; font-size: 1rem; outline: none; }
+        .chat-input input:focus { border-color: #4a90e2; }
+        .chat-input button { padding: 12px 24px; background: #4a90e2; color: white; border: none; border-radius: 25px; cursor: pointer; font-weight: 600; }
+        .empty-chat, .no-users { text-align: center; padding: 50px; color: #6c757d; }
+        .empty-chat i, .no-users i { font-size: 3rem; margin-bottom: 1rem; color: #dee2e6; }
+        .section-title { font-weight: 600; padding: 10px; margin: 10px 0; color: #4a90e2; }
+        .loading { text-align: center; padding: 20px; color: #6c757d; }
+        .error { text-align: center; padding: 20px; color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div id="navbar-container"></div>
+    <section class="chat-section">
+        <div class="container">
+            <div class="chat-container">
+                <div class="chat-sidebar">
+                    <div class="chat-sidebar-header">
+                        <h3><i class="fas fa-comments"></i> Chats</h3>
+                    </div>
+                    <div id="conversationsList" class="conversations-list">
+                        <div class="loading">Loading users...</div>
+                    </div>
+                </div>
+                <div class="chat-main">
+                    <div class="chat-header" id="chatHeader">
+                        <h3>Select a user to start chatting</h3>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="empty-chat">
+                            <i class="fas fa-comments"></i>
+                            <p>No conversation selected</p>
+                            <small>Click on a user from the left sidebar</small>
+                        </div>
+                    </div>
+                    <div class="chat-input" id="chatInput" style="display: none;">
+                        <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
+                        <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i> Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/chat.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script>
+        if (!getToken()) window.location.href = 'login.html';
+        loadNavbar();
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Blog1</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="navbar-container"></div>
+    
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                <p class="welcome-text">Welcome back, <span id="userName"></span>!</p>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <i class="fas fa-newspaper"></i>
+                        <h3 id="totalPosts">0</h3>
+                        <p>Total Posts</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-heart"></i>
+                        <h3 id="totalLikes">0</h3>
+                        <p>Total Likes</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class="fas fa-comment"></i>
+                        <h3 id="totalComments">0</h3>
+                        <p>Comments</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="my-posts">
+                <div class="section-header">
+                    <h2><i class="fas fa-pen-fancy"></i> My Posts</h2>
+                    <a href="create-post.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Post
+                    </a>
+                </div>
+                <div id="myPostsGrid" class="posts-grid">
+                    <div class="loading">Loading your posts...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="../js/config.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/posts.js"></script>
+    <script src="../js/navbar.js"></script>
+    <script>
+        // Check if user is logged in
+        if (!getToken()) {
+            window.location.href = 'login.html';
+        }
+        
+        // Set user name
+        const userEmail = localStorage.getItem('userEmail');
+        if (userEmail) {
+            document.getElementById('userName').textContent = userEmail.split('@')[0];
+        }
+        
+        // Load all data
+        loadNavbar();
+        loadMyPosts();
+        loadStats();
+        loadCommentsCount();
+        
+        // Function to load comments count
+        async function loadCommentsCount() {
+            const token = getToken();
+            if (!token) return;
+            
+            try {
+                const response = await fetch(`${API_URL}/posts`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    const myPosts = data.posts.filter(post => post.author?.id == localStorage.getItem('userId'));
+                    
+                    // Get comments for each post
+                    let totalComments = 0;
+                    for (const post of myPosts) {
+                        const commentsRes = await fetch(`${API_URL}/comments/post/${post.id}`);
+                        const commentsData = await commentsRes.json();
+                        if (commentsData.success) {
+                            totalComments += commentsData.comments.length;
+                        }
+                    }
+                    document.getElementById('totalComments').textContent = totalComments;
+                }
+            } catch (error) {
+                console.error('Error loading comments:', error);
+            }
+        }
+    </script>
+</body>
+</html>
