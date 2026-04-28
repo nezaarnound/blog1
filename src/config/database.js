@@ -1,4 +1,3 @@
- 
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 
@@ -10,7 +9,13 @@ const sequelize = new Sequelize(
   process.env.DB_PASSWORD,
   {
     host: process.env.DB_HOST,
-    dialect: process.env.DB_DIALECT || 'postgres',
+    dialect: 'postgres', // Shyira 'postgres' mu buryo bugaragara
+    dialectOptions: {
+      ssl: {
+        require: true,        // Ibi nikintu cy'ibanze
+        rejectUnauthorized: false // (Niba ufite ikibazo cy'icyemezo, ariko wenda uragikemura)
+      }
+    },
     logging: false,
     pool: {
       max: 10,
