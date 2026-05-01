@@ -78,4 +78,11 @@ function updateUnreadBadge() {
     }
 }
 
+// Make logout function global
+window.logout = function() {
+    console.log('Logout clicked');
+    localStorage.clear();
+    window.location.href = '../index.html';
+};
+
 window.updateUnreadBadge = updateUnreadBadge;

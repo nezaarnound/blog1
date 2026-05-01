@@ -20,6 +20,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static files (for uploaded images)
+app.use('/uploads', express.static('uploads'));
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
@@ -35,6 +38,20 @@ app.get('/api/health', (req, res) => {
     status: 'OK',
     database: process.env.DB_NAME,
     port: PORT
+  });
+});
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Blog1 API is running', 
+    status: 'OK',
+    endpoints: {
+      health: '/api/health',
+      users: '/api/users',
+      posts: '/api/posts',
+      chat: '/api/chat/conversations'
+    }
   });
 });
 

@@ -38,7 +38,6 @@ async function displayPosts(posts) {
         return;
     }
     
-    const token = getToken();
     const userId = localStorage.getItem('userId');
     
     // Load images for each post
@@ -62,11 +61,15 @@ async function displayPosts(posts) {
                     <h3 class="post-title">
                         <a href="pages/post-detail.html?id=${post.id}">${escapeHtml(post.title)}</a>
                     </h3>
-                    ${post.images.length > 0 ? `
+                    ${post.images && post.images.length > 0 ? `
                         <div class="post-images-grid">
-                            ${post.images.map(img => `<img src="${img.url}" alt="Post image" class="post-image">`).join('')}
+                            ${post.images.map(img => `
+                                <img src="${img.url}" alt="Post image" class="post-image" 
+                                     style="width:100%; max-height:250px; object-fit:cover; border-radius:8px; margin:5px 0;"
+                                     onerror="this.style.display='none'">
+                            `).join('')}
                         </div>
-                    ` : ''}
+                    ` : '<div class="no-image" style="color:#999; font-size:12px; padding:10px 0;">📷 No image</div>'}
                     <p class="post-excerpt">${escapeHtml(post.content.substring(0, 150))}${post.content.length > 150 ? '...' : ''}</p>
                     <div class="post-actions">
                         <button onclick="likePost(${post.id}, this)" class="${post.userLiked ? 'liked' : ''}">
@@ -91,13 +94,16 @@ async function displayPosts(posts) {
 // Load post images
 async function loadPostImages(postId) {
     try {
+        console.log('Loading images for post:', postId);
         const response = await api.get(`/images/post/${postId}`);
         const data = response.data;
+        console.log('Images response:', data);
         if (data.success) {
             return data.images;
         }
         return [];
     } catch (error) {
+        console.error('Error loading images:', error);
         return [];
     }
 }
@@ -168,10 +174,8 @@ async function loadCommentsForPost(postId) {
         const data = response.data;
         
         if (data.success) {
-            const token = getToken();
             const userId = localStorage.getItem('userId');
             
-            // Update comment count
             const countSpan = document.querySelector(`.comment-count-${postId}`);
             if (countSpan) countSpan.textContent = data.comments.length;
             
@@ -343,13 +347,13 @@ async function loadStats() {
     }
 }
 
-// Create post
+// Create post with images
 async function handleCreatePost(event) {
     event.preventDefault();
     
     const title = document.getElementById('title').value;
     const content = document.getElementById('content').value;
-    const token = getToken();
+    const imageFiles = document.getElementById('postImages')?.files || [];
     
     if (title.length < 3) {
         return showMessage('Title must be at least 3 characters!', 'error');
@@ -365,27 +369,28 @@ async function handleCreatePost(event) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
     
     try {
-        const response = await api.post('/posts', { title, content });
-        const data = response.data;
+        // 1. Create post
+        const postResponse = await api.post('/posts', { title, content });
+        const postData = postResponse.data;
         
-        if (data.success) {
-            // Upload images if any
-            const imageInputs = document.querySelectorAll('#imageUrls input[type="url"]');
-            for (const input of imageInputs) {
-                if (input.value.trim()) {
-                    await api.post('/images/upload', {
-                        postId: data.post.id,
-                        url: input.value.trim()
-                    });
-                }
+        if (postData.success) {
+            // 2. Upload images
+            for (let i = 0; i < imageFiles.length; i++) {
+                const formData = new FormData();
+                formData.append('image', imageFiles[i]);
+                formData.append('postId', postData.post.id);
+                
+                await api.post('/images/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
             }
             
-            showMessage('Post created successfully!', 'success');
+            showMessage('Post created successfully with images!', 'success');
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 1500);
         } else {
-            showMessage(data.message, 'error');
+            showMessage(postData.message, 'error');
         }
     } catch (error) {
         const message = error.response?.data?.message || error.message;
@@ -438,7 +443,6 @@ async function loadPostDetail(postId) {
         if (postData.success) {
             const post = postData.post;
             const likeCount = post.likesCount || 0;
-            const token = getToken();
             const userId = localStorage.getItem('userId');
             const isAuthor = post.author?.id == userId;
             const images = imagesData.success ? imagesData.images : [];
@@ -460,7 +464,7 @@ async function loadPostDetail(postId) {
                 </div>
                 ${images.length > 0 ? `
                     <div class="post-detail-images">
-                        ${images.map(img => `<img src="${img.url}" alt="Post image" class="post-detail-image">`).join('')}
+                        ${images.map(img => `<img src="${img.url}" alt="Post image" class="post-detail-image" style="max-width:100%; border-radius:12px; margin:10px 0;">`).join('')}
                     </div>
                 ` : ''}
                 <div class="post-detail-content">
@@ -473,8 +477,6 @@ async function loadPostDetail(postId) {
                     ${isAuthor ? `
                         <button onclick="editPost(${postId})" class="btn btn-outline">
                             <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button onclick="deletePostAndRedirect(${postId})" class="btn btn-outline">
                             <i class="fas fa-trash"></i> Delete
                         </button>
                     ` : ''}
@@ -524,7 +526,6 @@ async function loadCommentsForDetail(postId) {
         const data = response.data;
         
         if (data.success) {
-            const token = getToken();
             const userId = localStorage.getItem('userId');
             
             container.innerHTML = `
@@ -678,7 +679,6 @@ async function loadPostForEdit(postId) {
             const post = data.post;
             document.getElementById('title').value = post.title;
             document.getElementById('content').value = post.content;
-            console.log('Form populated with:', post.title);
         } else {
             showMessage('Post not found', 'error');
             setTimeout(() => {
@@ -741,20 +741,6 @@ async function editPost(postId) {
     window.location.href = `edit-post.html?id=${postId}`;
 }
 
-// ========== ADD IMAGE FIELD ==========
-function addImageField() {
-    const container = document.getElementById('imageUrls');
-    if (!container) return;
-    
-    const div = document.createElement('div');
-    div.className = 'image-url-input';
-    div.innerHTML = `
-        <input type="url" placeholder="https://example.com/image.jpg">
-        <button type="button" onclick="this.parentElement.remove()">Remove</button>
-    `;
-    container.appendChild(div);
-}
-
 // Escape HTML
 function escapeHtml(text) {
     if (!text) return '';
@@ -762,6 +748,36 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+// Image preview on create post
+function setupImagePreview() {
+    const imageInput = document.getElementById('postImages');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    if (imageInput && imagePreview) {
+        imageInput.addEventListener('change', function() {
+            imagePreview.innerHTML = '';
+            for (let i = 0; i < this.files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-image';
+                    img.style.width = '100px';
+                    img.style.height = '100px';
+                    img.style.objectFit = 'cover';
+                    img.style.borderRadius = '8px';
+                    img.style.margin = '5px';
+                    imagePreview.appendChild(img);
+                };
+                reader.readAsDataURL(this.files[i]);
+            }
+        });
+    }
+}
+
+// Initialize image preview
+document.addEventListener('DOMContentLoaded', setupImagePreview);
 
 // ========== GLOBAL FUNCTIONS ==========
 window.searchPosts = function() {
@@ -792,4 +808,3 @@ window.deletePostAndRedirect = deletePostAndRedirect;
 window.editPost = editPost;
 window.loadPostForEdit = loadPostForEdit;
 window.handleEditPost = handleEditPost;
-window.addImageField = addImageField;
