@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:3005/api';
+const API_URL = 'https://blog1-2-j9fd.onrender.com/api';
 
 const api = axios.create({
     baseURL: API_URL,
